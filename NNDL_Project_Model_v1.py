@@ -338,7 +338,7 @@ def main():
         val_loader,
         optimizer,
         criterion,
-        num_epochs=1,
+        num_epochs=10,
         device=device
     )
 
