@@ -281,6 +281,7 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, num_epoch
 
 
 def test_model_output(model, device):
+    model = model.to(device)
     model.eval()
     # Create random test data
     img1 = torch.randn(1, 3, 200, 200).to(device)
