@@ -1,6 +1,8 @@
 import colorsys
 import os
+import glob
 import random
+import shutil
 from collections import Counter
 from PIL import Image
 
@@ -118,10 +120,16 @@ def rgb_image(img, bg):
   return Image.composite(rgb_image, bg_img, alpha_mask)
 
 
-def mutate_image(SRC_DIR, OUT_DIR, input_image_path, n):
+def get_image_name(image_path):
+  base_name = os.path.basename(image_path)
+  return os.path.splitext(base_name)[0]
+
+
+def mutate_image(OUT_DIR, input_image_path, n):
+  img_name = get_image_name(input_image_path)
   img = None
   try:
-    img = Image.open(os.path.join(SRC_DIR, input_image_path)).convert("RGBA")
+    img = Image.open(input_image_path).convert("RGBA")
   except FileNotFoundError:
     print(f"Error: Input file '{input_image_path}' not found.")
     return
@@ -137,29 +145,39 @@ def mutate_image(SRC_DIR, OUT_DIR, input_image_path, n):
   img = rgb_image(img, bg)
   img = hue_image(img)
 
-
-  dir = os.path.join(OUT_DIR, input_image_path.split(".")[0])
+  dir = os.path.join(OUT_DIR, img_name)
   # Create directory if it doesn't exist
   if not os.path.exists(dir):
     os.makedirs(dir)
   # Save the transformed image
   output_image_path = os.path.join(dir, str(n) + ".png")
   img.save(output_image_path)
-  print(f"Image '{input_image_path}' transformed and saved to '{output_image_path}'")
 
 
 if __name__ == "__main__":
   SRC_DIR = "Pool"
   TRAINING_DIR = "Training"
   VALIDATION_DIR = "Validation"
-  if not os.path.exists(TRAINING_DIR):
-    os.makedirs(TRAINING_DIR)
-  if not os.path.exists(VALIDATION_DIR):
-    os.makedirs(VALIDATION_DIR)
+  TRAINING_FRACTION = 0.8
+
   # Open each png in the 'Pool' directory.
-  png_images = [f for f in os.listdir(SRC_DIR) if f.endswith(".png")]
-  for png_image in png_images:
-    for i in range(16):
-      mutate_image(SRC_DIR, TRAINING_DIR, png_image, i)
-    for i in range(4):
-      mutate_image(SRC_DIR, VALIDATION_DIR, png_image, i)
+  pool_files = glob.glob(os.path.join(SRC_DIR, "*.png"))
+  pool_files.sort()
+  print("Found %d Pool images." % len(pool_files))
+
+  training_len = int(len(pool_files) * TRAINING_FRACTION)
+  training_files = random.sample(pool_files, training_len)
+  validation_files = [item for item in pool_files if item not in training_files]
+  print("Split Pool into %d Training images and %d Validation images." % (len(training_files), len(validation_files)))
+
+  groups = [(training_files, TRAINING_DIR), (validation_files, VALIDATION_DIR)]
+  for (files, DIR) in groups:
+    files.sort()
+    shutil.rmtree(DIR)
+    os.makedirs(DIR)
+    for png_image in files:
+      img_name = get_image_name(png_image)
+      shutil.copy2(png_image, os.path.join(DIR, img_name + ".png"))
+      for i in range(16):
+        mutate_image(DIR, png_image, i)
+      print(f"Image '{png_image}' transformed and saved to '{DIR}'")
