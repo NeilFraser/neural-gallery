@@ -1,2 +1,7 @@
-*.png
+# Ignore compiled Python files.
 *.pyc
+
+# Ignore all PNG images.
+*.png
+# But do not ignore PNG images in the Pool directory
+!Pool/*.png
