@@ -139,11 +139,15 @@ def mutate_image(OUT_DIR, input_image_path, n):
 
   bg = get_background(img)
 
-  img = rotate_image(img)
-  img = translate_image(img)
-  img = stretch_image(img)
+  if random.random() > 0.5:
+    img = rotate_image(img)
+  if random.random() > 0.5:
+    img = translate_image(img)
+  if random.random() > 0.5:
+    img = stretch_image(img)
   img = rgb_image(img, bg)
-  img = hue_image(img)
+  if random.random() > 0.5:
+    img = hue_image(img)
 
   dir = os.path.join(OUT_DIR, img_name)
   # Create directory if it doesn't exist
@@ -158,22 +162,31 @@ if __name__ == "__main__":
   SRC_DIR = "Pool"
   TRAINING_DIR = "Training"
   VALIDATION_DIR = "Validation"
-  TRAINING_FRACTION = 0.8
+  TEST_DIR = "Test"
+  VALIDATION_FRACTION = 0.15
+  TEST_FRACTION = 0.15
 
   # Open each png in the 'Pool' directory.
   pool_files = glob.glob(os.path.join(SRC_DIR, "*.png"))
   pool_files.sort()
   print("Found %d Pool images." % len(pool_files))
 
-  training_len = int(len(pool_files) * TRAINING_FRACTION)
-  training_files = random.sample(pool_files, training_len)
-  validation_files = [item for item in pool_files if item not in training_files]
-  print("Split Pool into %d Training images and %d Validation images." % (len(training_files), len(validation_files)))
+  validation_len = int(len(pool_files) * VALIDATION_FRACTION)
+  test_len = int(len(pool_files) * TEST_FRACTION)
+  validation_files = random.sample(pool_files, validation_len)
+  training_files = [item for item in pool_files if item not in validation_files]
+  test_files = random.sample(training_files, test_len)
+  training_files = [item for item in training_files if item not in test_files]
+  print("Split Pool into %d Training images, %d Validation images, and %d Test images." %
+        (len(training_files), len(validation_files), len(test_files)))
 
-  groups = [(training_files, TRAINING_DIR), (validation_files, VALIDATION_DIR)]
+  groups = [(training_files, TRAINING_DIR), (validation_files, VALIDATION_DIR), (test_files, TEST_DIR)]
   for (files, DIR) in groups:
     files.sort()
-    shutil.rmtree(DIR)
+    try:
+      shutil.rmtree(DIR)
+    except:
+      pass
     os.makedirs(DIR)
     for png_image in files:
       img_name = get_image_name(png_image)

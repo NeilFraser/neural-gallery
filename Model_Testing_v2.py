@@ -1,22 +1,15 @@
-import glob
-import os
 import random
 import torch
 from PIL import Image
 from SiameseNetwork import SiameseNetwork
 
 
-def get_image_name(image_path):
-  base_name = os.path.basename(image_path)
-  return os.path.splitext(base_name)[0]
-
-
-def test_model(img_dir='Validation'):
+def test_model(img_dir='Test'):
     """
     Test the trained Siamese network on image pairs.
 
     Args:
-        img_dir (str): Directory containing validation images
+        img_dir (str): Directory containing test images
     """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -26,27 +19,7 @@ def test_model(img_dir='Validation'):
     model.to(device)
     model.eval()
 
-    # Get all validation images
-    png_files = glob.glob(os.path.join(img_dir, "*.png"))
-    png_files.sort()
-    print("Found %d %s images." % (len(png_files), img_dir))
-
-    # Create image pairs for testing.
-    pairs = []
-    for png_file in png_files:
-      # One pair is the validation image against itself (must match).
-      pairs.append((png_file, png_file, SiameseNetwork.SCORE_MATCH))
-      # Half is each validation image against its isotopes (should match).
-      png_name = get_image_name(png_file)
-      isotopes = glob.glob(os.path.join(img_dir, png_name, "*.png"))
-      for isotope in isotopes:
-         pairs.append((png_file, isotope, SiameseNetwork.SCORE_ISOTOPE))
-      # Half is each validation image against each other (should not match).
-      non_match_imgs = png_files[:]
-      non_match_imgs.remove(png_file)
-      non_match_imgs = random.sample(non_match_imgs, min(len(isotopes) + 1, len(non_match_imgs)))
-      for non_match in non_match_imgs:
-         pairs.append((png_file, non_match, SiameseNetwork.SCORE_NONE))
+    pairs = SiameseNetwork.get_pairs(img_dir)
 
     errors = 0.0
     count = 0
@@ -57,6 +30,8 @@ def test_model(img_dir='Validation'):
 
         img1_tensor = SiameseNetwork.TRANSFORM(img1).unsqueeze(0).to(device)
         img2_tensor = SiameseNetwork.TRANSFORM(img2).unsqueeze(0).to(device)
+        if random.random() > 0.5:
+           img1_tensor, img2_tensor = img2_tensor, img1_tensor
 
         # Get model prediction
         with torch.no_grad():
