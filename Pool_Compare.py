@@ -52,11 +52,13 @@ def pool_compare():
 
     n = len(png_files)
     for i in range(n):
+        print("%s:" % png_files[i])
         for j in range(i + 1, n):
             img1_path = png_files[i]
             img2_path = png_files[j]
             similarity = img_compare(img1_path, img2_path)
-            print(f"%s vs %s: %f" % (img1_path, img2_path, similarity))
+            if similarity > 0.75:
+                print(f"Similar: {img1_path} vs {img2_path} with similarity {similarity}")
 
 if __name__ == "__main__":
     pool_compare()

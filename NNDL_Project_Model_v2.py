@@ -1,4 +1,3 @@
-import os
 import random
 import torch
 from PIL import Image
@@ -14,7 +13,7 @@ class ImagePairDataset(Dataset):
 
         self.pairs = SiameseNetwork.get_pairs(root_dir)
 
-        print(f"Created {len(self.pairs)} image pairs for training/validation")
+        print(f"Created {len(self.pairs)} image pairs")
 
     # Rest of the class remains the same
     def __len__(self):
@@ -65,7 +64,7 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, num_epoch
 
     for epoch in range(num_epochs):
         model.train()
-        running_loss = 0.0
+        #running_loss = 0.0
 
         for i, batch in enumerate(train_loader):
             img1 = batch['img1'].to(device)
@@ -85,16 +84,15 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, num_epoch
             loss.backward()
             optimizer.step()
 
-            running_loss += loss.item()
+            #running_loss += loss.item()
 
-            if i % 10 == 9:
-                print(f'[{epoch+1}, {i+1}] loss: {running_loss/10:.3f}')
-                running_loss = 0.0
+            #if i % 10 == 9:
+            #    print(f'[{epoch+1}, {i+1}] loss: {running_loss/10:.3f}')
+            #    running_loss = 0.0
 
         # Validation
         model.eval()
         val_loss = 0.0
-        correct = 0
         total = 0
 
         with torch.no_grad():
@@ -108,22 +106,16 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, num_epoch
 
                 val_loss += loss.item()
 
-                # Calculate accuracy (threshold at 0.5)
-                predicted = (outputs > 0.5).float()
                 total += targets.size(0)
 
                 # Debug information
-                print(f"Batch - outputs: {outputs[:5].cpu().numpy()}")
-                print(f"Batch - targets: {targets[:5].cpu().numpy()}")
-                print(f"Batch - predicted: {predicted[:5].cpu().numpy()}")
-
-                correct += (predicted.view(-1) == targets.view(-1)).sum().item()
+                #print(f"Batch - outputs: {outputs[:5].cpu().numpy()}")
+                #print(f"Batch - targets: {targets[:5].cpu().numpy()}")
+                #print(f"Batch - predicted: {predicted[:5].cpu().numpy()}")
 
         epoch_val_loss = val_loss / len(val_loader)
-        epoch_val_acc = 100 * correct / total
 
-        print(f"Total samples: {total}, Correct predictions: {correct}")
-        print(f'Epoch {epoch+1} validation loss: {epoch_val_loss:.3f}, accuracy: {epoch_val_acc:.2f}%')
+        print(f"Total samples: {total}, Epoch {epoch+1} validation loss: {epoch_val_loss:.3f}")
 
     return model
 
@@ -154,7 +146,7 @@ def main():
         val_loader,
         optimizer,
         criterion,
-        num_epochs=1,
+        num_epochs=100,
         device=device
     )
 

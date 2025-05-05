@@ -89,5 +89,7 @@ class SiameseNetwork(nn.Module):
                 isotopes.append(non_match)  # Add the original to the isotopes.
                 non_match_image = random.choice(isotopes)
                 pairs.append((png_file, non_match_image, SiameseNetwork.SCORE_NONE))
-
+        # Shuffle the pairs to ensure randomness
+        random.shuffle(pairs)
+        # Return the pairs
         return pairs
