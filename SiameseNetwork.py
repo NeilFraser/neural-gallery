@@ -1,6 +1,7 @@
 import glob
 import os
 import random
+import re
 import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
@@ -12,7 +13,7 @@ class SiameseNetwork(nn.Module):
     FILENAME = "siamese_model.pth"
 
     SCORE_MATCH = 1.0
-    SCORE_ISOTOPE = 0.8
+    SCORE_ISOTOPE = 0.6
     SCORE_NONE = 0.0
 
     # Define transformations
@@ -77,7 +78,13 @@ class SiameseNetwork(nn.Module):
             png_name = SiameseNetwork.get_image_name(png_file)
             isotopes = glob.glob(os.path.join(dir, png_name, "*.png"))
             for isotope in isotopes:
-                pairs.append((png_file, isotope, SiameseNetwork.SCORE_ISOTOPE))
+                # Get the isotope's mutation score from its filename.
+                # Example filename: 1_50.png -> 50
+                m = re.search(r"\d+_(\d+).png$", isotope)
+                score = int(m.group(1)) / 100.0
+                # Calculate an expected score based on the mutation.
+                score = 1 - (1 - SiameseNetwork.SCORE_ISOTOPE) * score
+                pairs.append((png_file, isotope, score))
 
             # Half is the test image an isotope of other test images (should not match).
             non_match_imgs = png_files[:]

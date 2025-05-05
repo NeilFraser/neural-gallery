@@ -7,20 +7,22 @@ from collections import Counter
 from PIL import Image
 
 
-def rotate_image(img):
+def rotate_image(img, rnd):
   # 1. Random Rotation
-  angle = random.uniform(0, 360)
+  angle = rnd * 180
+  if random.random() > 0.5:
+    angle = -angle
   return img.rotate(angle, resample=Image.Resampling.BILINEAR, expand=False)
 
 
-def translate_image(img):
+def translate_image(img, rnd):
   # 2. Random Translation
   MAX_TRANSLATION = 6  # 1/n of the image.
   width, height = img.size
   max_translation_x = width // MAX_TRANSLATION
   max_translation_y = height // MAX_TRANSLATION
-  tx = random.randint(-max_translation_x, max_translation_x)
-  ty = random.randint(-max_translation_y, max_translation_y)
+  tx = int(rnd * (max_translation_x * 2) - max_translation_x)
+  ty = int(rnd * (max_translation_y * 2) - max_translation_y)
 
   # Create a new image with enough space for the translated image
   translated_img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
@@ -30,13 +32,13 @@ def translate_image(img):
   return translated_img
 
 
-def stretch_image(img):
+def stretch_image(img, rnd):
   # 3. Random stretch/zoom
   MIN_STRETCH = 0.8
   MAX_STRETCH = 1.2
   width, height = img.size
-  horizontal_factor = random.uniform(MIN_STRETCH, MAX_STRETCH)
-  vertical_factor = random.uniform(MIN_STRETCH, MAX_STRETCH)
+  horizontal_factor = rnd * (MAX_STRETCH - MIN_STRETCH) + MIN_STRETCH
+  vertical_factor = rnd * (MAX_STRETCH - MIN_STRETCH) + MIN_STRETCH
   new_width = int(width * horizontal_factor)
   new_height = int(height * vertical_factor)
 
@@ -50,10 +52,10 @@ def stretch_image(img):
   return img.crop((left, top, right, bottom))
 
 
-def hue_image(img):
+def hue_image(img, rnd):
   # 4. Random hue rotation
   width, height = img.size
-  hue_shift = random.uniform(0, 1)
+  hue_shift = rnd
   pixels = img.load()
 
   for y in range(height):
@@ -139,22 +141,35 @@ def mutate_image(OUT_DIR, input_image_path, n):
 
   bg = get_background(img)
 
+  mutation = 0
   if random.random() > 0.5:
-    img = rotate_image(img)
+    rnd = random.random()
+    img = rotate_image(img, rnd)
+    mutation += rnd
   if random.random() > 0.5:
-    img = translate_image(img)
+    rnd = random.random()
+    img = translate_image(img, rnd)
+    mutation += rnd
   if random.random() > 0.5:
-    img = stretch_image(img)
+    rnd = random.random()
+    img = stretch_image(img, rnd)
+    mutation += rnd
   img = rgb_image(img, bg)
   if random.random() > 0.5:
-    img = hue_image(img)
+    rnd = random.random()
+    img = hue_image(img, rnd)
+    mutation += rnd
+
+  # Mutation is a number between 0 and 4.
+  # Create a score penalty from 0 to 100.
+  score = int(mutation * 25)
 
   dir = os.path.join(OUT_DIR, img_name)
   # Create directory if it doesn't exist
   if not os.path.exists(dir):
     os.makedirs(dir)
   # Save the transformed image
-  output_image_path = os.path.join(dir, str(n) + ".png")
+  output_image_path = os.path.join(dir, "%d_%d.png" % (n, score))
   img.save(output_image_path)
 
 

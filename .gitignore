@@ -5,3 +5,4 @@
 *.png
 # But do not ignore PNG images in the Pool directory
 !Pool/*.png
+nohup.out

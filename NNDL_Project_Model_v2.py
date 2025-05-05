@@ -62,6 +62,7 @@ class CustomLoss(nn.Module):
 def train_model(model, train_loader, val_loader, optimizer, criterion, num_epochs=20, device='cuda'):
     model.to(device)
 
+    best_val_loss = 1.0
     for epoch in range(num_epochs):
         model.train()
         #running_loss = 0.0
@@ -116,6 +117,17 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, num_epoch
         epoch_val_loss = val_loss / len(val_loader)
 
         print(f"Total samples: {total}, Epoch {epoch+1} validation loss: {epoch_val_loss:.3f}")
+        # Append to log file
+        with open('training_log.txt', 'a') as log_file:
+            log_file.write(f"Epoch {epoch+1}, Validation Loss: {epoch_val_loss:.3f}\n")
+
+        if epoch_val_loss < best_val_loss:
+            best_val_loss = epoch_val_loss
+            # Save the model if validation loss decreases
+            torch.save(model.state_dict(), SiameseNetwork.FILENAME)
+            print(f"Model saved with validation loss: {best_val_loss:.3f}")
+            with open('training_log.txt', 'a') as log_file:
+                log_file.write(f"Model saved with validation loss: {best_val_loss:.3f}\n")
 
     return model
 
@@ -146,12 +158,12 @@ def main():
         val_loader,
         optimizer,
         criterion,
-        num_epochs=100,
+        num_epochs=1000,
         device=device
     )
 
     # Save model
-    torch.save(trained_model.state_dict(), SiameseNetwork.FILENAME)
+    #torch.save(trained_model.state_dict(), SiameseNetwork.FILENAME)
 
 if __name__ == '__main__':
     main()
