@@ -27,12 +27,13 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
 
         # Use pretrained ResNet for feature extraction
-        resnet = models.resnet18(pretrained=True)
+        resnet = models.resnet101(pretrained=True)
         # Remove the final fully connected layer
         self.feature_extractor = nn.Sequential(*list(resnet.children())[:-1])
 
-        # Feature dimension for ResNet18 is 512
-        self.fc1 = nn.Linear(512 * 2, 256)
+        # Feature dimension for ResNet18/34 is 512
+        # Feature dimension for ResNet50/101/152 is 2048
+        self.fc1 = nn.Linear(2048 * 2, 256)
         self.dropout = nn.Dropout(0.5)
         self.fc2 = nn.Linear(256, 1)
 

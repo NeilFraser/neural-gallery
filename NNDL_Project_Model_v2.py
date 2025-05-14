@@ -118,16 +118,14 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, num_epoch
 
         print(f"Total samples: {total}, Epoch {epoch+1} validation loss: {epoch_val_loss:.3f}")
         # Append to log file
-        with open('training_log.txt', 'a') as log_file:
-            log_file.write(f"Epoch {epoch+1}, Validation Loss: {epoch_val_loss:.3f}\n")
+        #with open('resnet_training_log.csv', 'a') as log_file:
+        #    log_file.write(f"{epoch+1}, {epoch_val_loss:.3f}\n")
 
         if epoch_val_loss < best_val_loss:
             best_val_loss = epoch_val_loss
             # Save the model if validation loss decreases
             torch.save(model.state_dict(), SiameseNetwork.FILENAME)
             print(f"Model saved with validation loss: {best_val_loss:.3f}")
-            with open('training_log.txt', 'a') as log_file:
-                log_file.write(f"Model saved with validation loss: {best_val_loss:.3f}\n")
 
     return model
 
