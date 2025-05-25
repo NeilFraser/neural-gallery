@@ -1,7 +1,7 @@
 import random
 import torch
 from PIL import Image
-from DINOv2 import DINOv2EmbeddingExtractor
+from SiameseNetwork import SiameseNetwork
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
 
@@ -11,7 +11,7 @@ class ImagePairDataset(Dataset):
         self.transform = transform
         self.all_images = []
 
-        self.pairs = DINOv2EmbeddingExtractor.get_pairs(root_dir)
+        self.pairs = SiameseNetwork.get_pairs(root_dir)
 
         print(f"Created {len(self.pairs)} image pairs")
 
@@ -41,13 +41,22 @@ class ImagePairDataset(Dataset):
 class CustomLoss(nn.Module):
     def __init__(self):
         super(CustomLoss, self).__init__()
-        self.cosine_similarity = nn.CosineSimilarity(dim=1)
 
 
-    def forward(self, similarity, targets):
-        # Compute Mean Squared Error (MSE) between similarity and targets
-        loss = torch.mean((similarity - targets)**2)
-        return loss
+    def forward(self, outputs, targets):
+        batch_size = outputs.size(0)
+        device = outputs.device
+
+        # Initialize loss tensors
+        loss = torch.zeros(batch_size, device=device)
+
+        for i in range(batch_size):
+            target = targets[i]
+            output = outputs[i].squeeze()
+            loss[i] = abs(target - output)
+
+        total_loss = loss.sum()
+        return total_loss / batch_size if batch_size > 0 else total_loss
 
 
 def train_model(model, train_loader, val_loader, optimizer, criterion, num_epochs=20, device='cuda'):
@@ -76,9 +85,9 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, num_epoch
             loss.backward()
             optimizer.step()
 
-            # running_loss += loss.item()
-            #
-            # if i % 10 == 9:
+            #running_loss += loss.item()
+
+            #if i % 10 == 9:
             #    print(f'[{epoch+1}, {i+1}] loss: {running_loss/10:.3f}')
             #    running_loss = 0.0
 
@@ -109,16 +118,14 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, num_epoch
 
         print(f"Total samples: {total}, Epoch {epoch+1} validation loss: {epoch_val_loss:.3f}")
         # Append to log file
-        with open('training_log.txt', 'a') as log_file:
-            log_file.write(f"Epoch {epoch+1}, Validation Loss: {epoch_val_loss:.3f}\n")
+        with open('resnet50a_training_log.csv', 'a') as log_file:
+            log_file.write(f"{epoch+1}, {epoch_val_loss:.3f}\n")
 
         if epoch_val_loss < best_val_loss:
             best_val_loss = epoch_val_loss
             # Save the model if validation loss decreases
             torch.save(model.state_dict(), SiameseNetwork.FILENAME)
             print(f"Model saved with validation loss: {best_val_loss:.3f}")
-            with open('training_log.txt', 'a') as log_file:
-                log_file.write(f"Model saved with validation loss: {best_val_loss:.3f}\n")
 
     return model
 
@@ -128,15 +135,15 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Create datasets
-    train_dataset = ImagePairDataset(root_dir='Training', transform=DINOv2EmbeddingExtractor.TRANSFORM)
-    val_dataset = ImagePairDataset(root_dir='Validation', transform=DINOv2EmbeddingExtractor.TRANSFORM)
+    train_dataset = ImagePairDataset(root_dir='../Training', transform=SiameseNetwork.TRANSFORM)
+    val_dataset = ImagePairDataset(root_dir='../Validation', transform=SiameseNetwork.TRANSFORM)
 
     # Create data loaders with fewer workers
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=0)
     val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=0)
 
     # Initialize model
-    model = DINOv2EmbeddingExtractor()
+    model = SiameseNetwork()
 
     # Define optimizer and loss function
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -149,12 +156,12 @@ def main():
         val_loader,
         optimizer,
         criterion,
-        num_epochs=1,#000,
+        num_epochs=1000,
         device=device
     )
 
     # Save model
-    #torch.save(trained_model.state_dict(), DINOv2EmbeddingExtractor.FILENAME)
+    #torch.save(trained_model.state_dict(), SiameseNetwork.FILENAME)
 
 if __name__ == '__main__':
     main()

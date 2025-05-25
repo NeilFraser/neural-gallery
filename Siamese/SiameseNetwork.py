@@ -10,6 +10,13 @@ from torchvision import models
 
 
 class SiameseNetwork(nn.Module):
+    """
+    A Siamese Neural Network.
+
+    Input: A pair of 200x200 images.
+    Output: A single sigmoid value.
+    """
+
     FILENAME = "siamese_model.pth"
 
     SCORE_MATCH = 1.0
@@ -27,7 +34,7 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
 
         # Use pretrained ResNet for feature extraction
-        resnet = models.resnet101(pretrained=True)
+        resnet = models.resnet50(pretrained=True)
         # Remove the final fully connected layer
         self.feature_extractor = nn.Sequential(*list(resnet.children())[:-1])
 
