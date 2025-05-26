@@ -2,7 +2,7 @@ import torch
 from PIL import Image
 import torchvision.transforms as transforms
 import glob
-from NNDL_Project_Model_v1 import SiameseNetwork
+from NNDL_Project_Model_v2 import SiameseNetwork
 
 
 
@@ -47,7 +47,7 @@ def img_compare(img1_path, img2_path):
     return similarity
 
 def pool_compare():
-    png_files = glob.glob("Pool/*.png")
+    png_files = glob.glob("../Pool/*.png")
     png_files.sort()
 
     n = len(png_files)
