@@ -5,6 +5,7 @@ import re
 import torchvision.transforms as transforms
 import torch.nn as nn
 
+
 class ConvolutionalNetwork(nn.Module):
     """
     A Convolutional Neural Network.
@@ -19,7 +20,7 @@ class ConvolutionalNetwork(nn.Module):
     SCORE_ISOTOPE = 0.6
     SCORE_NONE = 0.0
 
-    # Define transformations
+    # Transform images to 200x400 and normalize.
     TRANSFORM = transforms.Compose([
         transforms.Resize((200, 400)),
         transforms.ToTensor(),
@@ -61,14 +62,14 @@ class ConvolutionalNetwork(nn.Module):
         self.pool3 = nn.MaxPool2d(kernel_size=(5,5), stride=(5,5)) # Using tuple for potentially non-square kernel/stride
         # Output shape: (Batch, 64, 5, 10) after pool (25/5=5, 50/5=10)
 
-        # Flatten the output from conv blocks
+        # Flatten the output from conv blocks.
         # Calculated flattened features: 64 * 5 * 10 = 3200
         self.fc1_input_features = 64 * 5 * 10
 
         # Fully Connected Layers
         self.fc1 = nn.Linear(self.fc1_input_features, 512)
         self.relu4 = nn.ReLU()
-        self.dropout = nn.Dropout(0.5) # Optional dropout for regularization
+        self.dropout = nn.Dropout(0.5) # Optional dropout for regularization.
         self.fc2 = nn.Linear(512, 1)
         self.sigmoid = nn.Sigmoid()
 
@@ -89,13 +90,13 @@ class ConvolutionalNetwork(nn.Module):
         # Convolutional Block 3
         x = self.pool3(self.relu3(self.conv3(x)))
 
-        # Flatten the tensor for the fully connected layers
-        # x.view(-1, num_features) where -1 infers the batch size
+        # Flatten the tensor for the fully connected layers.
+        # x.view(-1, num_features) where -1 infers the batch size.
         x = x.view(-1, self.fc1_input_features)
 
         # Fully Connected Layers
         x = self.relu4(self.fc1(x))
-        x = self.dropout(x) # Apply dropout
+        x = self.dropout(x) # Apply dropout.
         x = self.fc2(x)
         x = self.sigmoid(x)
 
@@ -108,11 +109,11 @@ class ConvolutionalNetwork(nn.Module):
 
 
     def get_pairs(dir):
-        # Check if directory exists
+        # Check if directory exists.
         if not os.path.exists(dir):
             raise FileNotFoundError(f"Directory not found: {dir}")
 
-        # Get all master images
+        # Get all master images.
         png_files = glob.glob(os.path.join(dir, "*.png"))
         png_files.sort()
         print("Found %d %s images." % (len(png_files), dir))
@@ -145,7 +146,7 @@ class ConvolutionalNetwork(nn.Module):
                 isotopes.append(non_match)  # Add the original to the isotopes.
                 non_match_image = random.choice(isotopes)
                 pairs.append((png_file, non_match_image, ConvolutionalNetwork.SCORE_NONE))
-        # Shuffle the pairs to ensure randomness
+        # Shuffle the pairs to ensure randomness.
         random.shuffle(pairs)
-        # Return the pairs
+        # Return the pairs.
         return pairs

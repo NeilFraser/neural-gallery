@@ -1,50 +1,48 @@
 import torch
 from PIL import Image
-import torchvision.transforms as transforms
 import glob
 from NNDL_Project_Model_v3 import DINOv2EmbeddingExtractor
 
 
+"""
+This script compares each image in the 'Pool' directory with every other image.
+None of these images should match each other, so any high similarity score indicates
+a false positive.
+Tests the accuracy of the DINOv2 model.
+"""
 
 model_path='dino.pth'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-#def pool_compare(model_path='siamese_model.pth', pool_dir='Pool', sample_dir=None, num_samples=5, device=None):
 
 def img_compare(img1_path, img2_path):
     """
     Test the trained Siamese network on image pairs and visualize results.
 
     Args:
-        sample_dir (str): Directory containing test samples (if None, uses random pool images)
-        num_samples (int): Number of random sample pairs to display
+        img1_path (str): Path to the first image.
+        img2_path (str): Path to the second image.
     """
 
-    # Load the model
+    # Load the model.
     model = DINOv2EmbeddingExtractor()
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
     model.eval()
 
-    # Define transformations (same as training)
-    transform = transforms.Compose([
-        transforms.Resize((200, 200)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-
-    # Load and preprocess images
+    # Load and preprocess images.
     img1 = Image.open(img1_path).convert('RGB')
     img2 = Image.open(img2_path).convert('RGB')
 
     img1_tensor = DINOv2EmbeddingExtractor.TRANSFORM(img1).unsqueeze(0).to(device)
     img2_tensor = DINOv2EmbeddingExtractor.TRANSFORM(img2).unsqueeze(0).to(device)
 
-    # Get model prediction
+    # Get model prediction.
     with torch.no_grad():
         similarity = model(img1_tensor, img2_tensor).item()
 
     return similarity
+
 
 def pool_compare():
     png_files = glob.glob("../Pool/*.png")
@@ -59,6 +57,7 @@ def pool_compare():
             similarity = img_compare(img1_path, img2_path)
             if similarity > 0.75:
                 print(f"Similar: {img1_path} vs {img2_path} with similarity {similarity}")
+
 
 if __name__ == "__main__":
     pool_compare()

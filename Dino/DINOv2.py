@@ -2,46 +2,53 @@ import glob
 import os
 import random
 import re
-import torch
 import timm
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torch import nn
-from torchvision import models
 
 
 class DINOv2EmbeddingExtractor(nn.Module):
+    """
+    A Siamese Dino Neural Network.
+
+    Input: A pair of 200x200 images.
+    Output: A single sigmoid value.
+    """
+
     FILENAME = "dino.pth"
 
     SCORE_MATCH = 1.0
     SCORE_ISOTOPE = 0.6
     SCORE_NONE = 0.0
 
-    # Define transformations, updated to match DINOv2 input requirements
+    # Transform images to 224x224 and normalize.
     TRANSFORM = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
+
     def __init__(self):
         super(DINOv2EmbeddingExtractor, self).__init__()
-        # Load pre-trained DINOv2 model
+        # Load pre-trained DINOv2 model.
         self.feature_extractor = timm.create_model('vit_base_patch16_224_dino', pretrained=True)
-        self.feature_extractor.reset_classifier(0)  # Remove classification head
+        self.feature_extractor.reset_classifier(0)  # Remove classification head.
+
 
     def forward(self, img1, img2):
-        # Ensure inputs are batched
+        # Ensure inputs are batched.
         if img1.ndim == 3:
             img1 = img1.unsqueeze(0)
         if img2.ndim == 3:
             img2 = img2.unsqueeze(0)
 
-        # Extract embeddings for both images
+        # Extract embeddings for both images.
         embedding1 = self.feature_extractor(img1)
         embedding2 = self.feature_extractor(img2)
 
-        # Compute cosine similarity between the two embeddings
+        # Compute cosine similarity between the two embeddings.
         similarity = F.cosine_similarity(embedding1, embedding2, dim=1)
         return similarity
 
@@ -52,11 +59,11 @@ class DINOv2EmbeddingExtractor(nn.Module):
 
 
     def get_pairs(dir):
-        # Check if directory exists
+        # Check if directory exists.
         if not os.path.exists(dir):
             raise FileNotFoundError(f"Directory not found: {dir}")
 
-        # Get all master images
+        # Get all master images.
         png_files = glob.glob(os.path.join(dir, "*.png"))
         png_files.sort()
         print("Found %d %s images." % (len(png_files), dir))
@@ -89,7 +96,7 @@ class DINOv2EmbeddingExtractor(nn.Module):
                 isotopes.append(non_match)  # Add the original to the isotopes.
                 non_match_image = random.choice(isotopes)
                 pairs.append((png_file, non_match_image, DINOv2EmbeddingExtractor.SCORE_NONE))
-        # Shuffle the pairs to ensure randomness
+        # Shuffle the pairs to ensure randomness.
         random.shuffle(pairs)
-        # Return the pairs
+        # Return the pairs.
         return pairs

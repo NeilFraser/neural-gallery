@@ -7,6 +7,16 @@ from collections import Counter
 from PIL import Image
 
 
+"""
+This script mutates images in the 'Pool' directory by applying random transformations.
+Each image is transformed by applying a combination of:
+  1. Random rotation
+  2. Random translation
+  3. Random stretch/zoom
+  4. Random hue rotation
+The transformed images are saved in separate directories for training, validation, and testing.
+"""
+
 def rotate_image(img, rnd):
   # 1. Random Rotation
   angle = rnd * 180

@@ -4,7 +4,13 @@ from PIL import Image
 from SiameseNetwork import SiameseNetwork
 
 
-def test_model(img_dir='Test'):
+""" This script tests the accuracy of a trained ResNet network model.
+It uses the images in the 'Test' directory, which were never been seen by the
+model during training.
+Prints statistics about the model's performance.
+"""
+
+def test_model(img_dir):
     """
     Test the trained Siamese network on image pairs.
 
@@ -13,7 +19,7 @@ def test_model(img_dir='Test'):
     """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # Load the model
+    # Load the model.
     model = SiameseNetwork()
     model.load_state_dict(torch.load(SiameseNetwork.FILENAME, map_location=device))
     model.to(device)
@@ -70,8 +76,7 @@ def test_model(img_dir='Test'):
     print("Average overly-negative error: %f%%" % (negative_errors / negative_count * 100))
     print("Worst false positive: %d%% (%s vs %s)" % (round(worst_false_positive * 100), worst_false_positive_pair[0], worst_false_positive_pair[1]))
     print("Worst false negative: %d%% (%s vs %s)" % (round(worst_false_negative * 100), worst_false_negative_pair[0], worst_false_negative_pair[1]))
-    
 
 
 if __name__ == "__main__":
-    test_model()
+    test_model('Test')
