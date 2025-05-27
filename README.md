@@ -25,3 +25,7 @@ A Siamese ResNet network that performs with 95% accuracy.  Trains in 150 epochs.
 ## Dino
 
 A Siamese DINO network that performs with 95% accuracy.  Trains in 2000 epochs.
+
+## Training Logs
+
+Raw data and graphs may be found on this Google Sheet: https://docs.google.com/spreadsheets/d/1Ly30wlKpyJhtPw-PZMbACMptMICxrwAqKx4FG97bhPc/edit
